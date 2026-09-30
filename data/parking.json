@@ -3,6 +3,6 @@
   {"id": "location", "visibility": "public", "text": "DEMO DATA: Central Parking is located at 10 Example Street, Warsaw. The entrance is on Example Street."},
   {"id": "hours", "visibility": "public", "text": "DEMO DATA: Opening hours: Central Parking is open 24 hours a day, seven days a week."},
   {"id": "prices", "visibility": "public", "text": "DEMO DATA: Parking prices: 5 PLN per hour or 40 PLN per day. Payment is accepted by card or cash."},
-  {"id": "availability", "visibility": "public", "text": "DEMO DATA: Live parking space availability is not connected in Stage 1. An administrator must check whether a space is available for your requested dates."},
-  {"id": "booking", "visibility": "public", "text": "DEMO DATA: To book or reserve parking, type reserve. Provide your first name, surname, car registration number, and reservation start and end dates and times. Stage 1 collects a draft only; it does not confirm a booking or send it to an administrator."}
+  {"id": "availability", "visibility": "public", "text": "DEMO DATA: Live parking space availability is not connected. An administrator must check whether a space is available for your requested dates before confirming."},
+  {"id": "booking", "visibility": "public", "text": "DEMO DATA: To book or reserve parking, type reserve. Provide your first name, surname, car registration number, and reservation start and end dates and times. The completed request is sent to an administrator for confirmation or refusal. Type status to check their decision. A pending request is not a confirmed reservation."}
 ]

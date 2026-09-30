@@ -1,6 +1,9 @@
-"""Collect a single draft locally. No LLM, database, or confirmation action."""
+"""Collect validated reservation details and coordinate the human handoff."""
 from datetime import datetime
 import re
+from uuid import uuid4
+
+from httpx import HTTPError
 
 FIELDS = ["first_name", "surname", "car_number", "start", "end"]
 QUESTIONS = [
@@ -19,7 +22,7 @@ class Reservation:
     def begin(self):
         self.data.clear()
         self.active = True
-        return "This collects a temporary draft, not a confirmed booking. Type cancel to stop. " + QUESTIONS[0]
+        return "Your completed request will be sent for administrator approval. Type cancel to stop collecting details. " + QUESTIONS[0]
 
     def accept(self, value):
         value = value.strip()
@@ -49,7 +52,61 @@ class Reservation:
         self.data[field] = value
         if len(self.data) == len(FIELDS):
             self.active = False
-            return ("Draft collected in memory. No space is reserved and nothing has been sent "
-                    "to an administrator. Human confirmation will be added in a later stage. "
-                    "Type cancel to clear the draft.")
+            return "Details collected. No space is reserved until administrator confirmation."
         return QUESTIONS[len(self.data)]
+
+
+class ReservationWorkflow:
+    """One outstanding request per chatbot session; retry uses the same ID."""
+
+    def __init__(self, agent):
+        self.agent = agent
+        self.draft = Reservation()
+        self.request_id = None
+        self.sent = False
+        self.final = False
+
+    def handle(self, text):
+        command = text.strip().lower()
+        if command == "status":
+            if not self.request_id:
+                return "No request has been submitted in this session."
+            try:
+                status = self.agent.status(self.request_id)
+            except HTTPError:
+                return "Could not check the request. Check the API and type status to try again."
+            self.sent = True
+            self.draft.data.clear()
+            self.final = status in {"confirmed", "refused"}
+            return {"pending": "Your reservation is awaiting administrator approval.",
+                    "confirmed": "The administrator confirmed your reservation.",
+                    "refused": "The administrator refused your reservation."}[status]
+        if command == "retry":
+            if self.request_id and not self.sent:
+                return self._submit()
+            return "No failed submission to retry. Type status to check a sent request."
+        if command == "cancel":
+            if self.request_id and not self.final:
+                return "This request may already be with the administrator. Contact them to withdraw it; use status or retry."
+            return self.draft.accept("cancel")
+        if command in {"reserve", "book", "reservation", "book parking", "reserve parking"}:
+            if self.request_id and not self.final:
+                return "You already have an outstanding request. Type status or retry."
+            self.request_id, self.sent, self.final = None, False, False
+            return self.draft.begin()
+        if self.draft.active:
+            answer = self.draft.accept(text)
+            if not self.draft.active and len(self.draft.data) == len(FIELDS):
+                self.request_id = str(uuid4())
+                return self._submit()
+            return answer
+        return None
+
+    def _submit(self):
+        try:
+            self.agent.submit(self.request_id, dict(self.draft.data))
+        except HTTPError:
+            return "Could not verify submission. Details are kept for retry; type retry to resend safely."
+        self.sent = True
+        self.draft.data.clear()
+        return f"Request {self.request_id} sent to the administrator. Type status to check their decision."

@@ -3,13 +3,15 @@ from httpx import HTTPError
 from ollama import ResponseError
 
 from rag import ParkingRAG, build_store
-from reservations import Reservation
+from admin_agent import AdminAgent
+from reservations import ReservationWorkflow
 
 
 def main():
     rag = ParkingRAG(build_store())
-    reservation = Reservation()
-    print("Parking chatbot (demo data). Ask a question, or type reserve, cancel, or quit.")
+    admin = AdminAgent()
+    reservation = ReservationWorkflow(admin)
+    print("Parking chatbot (demo data). Ask a question, or type reserve, status, retry, cancel, or quit.")
     try:
         while True:
             text = input("You: ").strip()
@@ -17,11 +19,8 @@ def main():
                 break
             if not text:
                 continue
-            if text.lower() == "cancel" or reservation.active:
-                answer = reservation.accept(text)
-            elif text.lower() in {"reserve", "book", "reservation", "book parking", "reserve parking"}:
-                answer = reservation.begin()
-            else:
+            answer = reservation.handle(text)
+            if answer is None:
                 try:
                     answer = rag.ask(text)
                 except (ConnectionError, TimeoutError, HTTPError, ResponseError):
@@ -30,7 +29,8 @@ def main():
     except (EOFError, KeyboardInterrupt):
         print("\nGoodbye.")
     finally:
-        reservation.data.clear()
+        reservation.draft.data.clear()
+        admin.close()
 
 
 if __name__ == "__main__":
