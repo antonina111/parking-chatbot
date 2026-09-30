@@ -1,0 +1,102 @@
+[
+  {
+    "question": "What are your opening hours?",
+    "retrieved": [
+      "hours"
+    ],
+    "recall": 1.0,
+    "precision": 0.5
+  },
+  {
+    "question": "Are you open seven days a week?",
+    "retrieved": [
+      "hours"
+    ],
+    "recall": 1.0,
+    "precision": 0.5
+  },
+  {
+    "question": "What are the parking prices?",
+    "retrieved": [
+      "hours",
+      "prices"
+    ],
+    "recall": 1.0,
+    "precision": 0.5
+  },
+  {
+    "question": "Can I pay by card or cash?",
+    "retrieved": [
+      "prices"
+    ],
+    "recall": 1.0,
+    "precision": 0.5
+  },
+  {
+    "question": "Where is the parking entrance?",
+    "retrieved": [
+      "hours",
+      "location"
+    ],
+    "recall": 1.0,
+    "precision": 0.5
+  },
+  {
+    "question": "What is your address in Warsaw?",
+    "retrieved": [
+      "location"
+    ],
+    "recall": 1.0,
+    "precision": 0.5
+  },
+  {
+    "question": "How do I book parking?",
+    "retrieved": [
+      "booking",
+      "hours"
+    ],
+    "recall": 1.0,
+    "precision": 0.5
+  },
+  {
+    "question": "What details are needed for a reservation?",
+    "retrieved": [
+      "booking"
+    ],
+    "recall": 1.0,
+    "precision": 0.5
+  },
+  {
+    "question": "Is live space availability connected?",
+    "retrieved": [
+      "availability"
+    ],
+    "recall": 1.0,
+    "precision": 0.5
+  },
+  {
+    "question": "What is the maximum vehicle height?",
+    "retrieved": [
+      "general"
+    ],
+    "recall": 1.0,
+    "precision": 0.5
+  },
+  {
+    "question": "How many accessible spaces are there?",
+    "retrieved": [
+      "general"
+    ],
+    "recall": 1.0,
+    "precision": 0.5
+  },
+  {
+    "question": "What are your prices and opening hours?",
+    "retrieved": [
+      "hours",
+      "prices"
+    ],
+    "recall": 1.0,
+    "precision": 1.0
+  }
+]

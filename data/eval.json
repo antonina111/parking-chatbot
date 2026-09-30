@@ -1,0 +1,14 @@
+[
+  {"question": "What are your opening hours?", "relevant": ["hours"], "keywords": ["24"]},
+  {"question": "Are you open seven days a week?", "relevant": ["hours"], "keywords": ["seven", "7"]},
+  {"question": "What are the parking prices?", "relevant": ["prices"], "keywords": ["5"]},
+  {"question": "Can I pay by card or cash?", "relevant": ["prices"], "keywords": ["card"]},
+  {"question": "Where is the parking entrance?", "relevant": ["location"], "keywords": ["example street"]},
+  {"question": "What is your address in Warsaw?", "relevant": ["location"], "keywords": ["10 example"]},
+  {"question": "How do I book parking?", "relevant": ["booking"], "keywords": ["reserve"]},
+  {"question": "What details are needed for a reservation?", "relevant": ["booking"], "keywords": ["name"]},
+  {"question": "Is live space availability connected?", "relevant": ["availability"], "keywords": ["not", "no"]},
+  {"question": "What is the maximum vehicle height?", "relevant": ["general"], "keywords": ["2.1"]},
+  {"question": "How many accessible spaces are there?", "relevant": ["general"], "keywords": ["2", "two"]},
+  {"question": "What are your prices and opening hours?", "relevant": ["prices", "hours"], "keywords": ["24"]}
+]
