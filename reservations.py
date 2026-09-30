@@ -66,7 +66,7 @@ class ReservationWorkflow:
         self.sent = False
         self.final = False
 
-    def handle(self, text):
+    def handle(self, text, defer_submit=False):
         command = text.strip().lower()
         if command == "status":
             if not self.request_id:
@@ -83,7 +83,7 @@ class ReservationWorkflow:
                     "refused": "The administrator refused your reservation."}[status]
         if command == "retry":
             if self.request_id and not self.sent:
-                return self._submit()
+                return "" if defer_submit else self.submit()
             return "No failed submission to retry. Type status to check a sent request."
         if command == "cancel":
             if self.request_id and not self.final:
@@ -98,11 +98,11 @@ class ReservationWorkflow:
             answer = self.draft.accept(text)
             if not self.draft.active and len(self.draft.data) == len(FIELDS):
                 self.request_id = str(uuid4())
-                return self._submit()
+                return "" if defer_submit else self.submit()
             return answer
         return None
 
-    def _submit(self):
+    def submit(self):
         try:
             self.agent.submit(self.request_id, dict(self.draft.data))
         except HTTPError:

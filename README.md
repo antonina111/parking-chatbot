@@ -1,6 +1,8 @@
-# Parking chatbot — Stages 1–3
+# Parking chatbot — Stages 1–4
 
 A minimal Python terminal app: public parking questions use **LangChain + LangGraph + Milvus Lite + Ollama**. A second LangChain agent sends completed reservation requests to a REST API for human approval. Approved reservations are saved to text files through MCP.
+
+LangGraph orchestrates user interaction, administrator handoff, approval, and recording.
 
 ## Run
 
@@ -93,6 +95,31 @@ The assignment's direct-function alternative is also available: set `export RESE
 
 ## How it works
 
+### Unified orchestration (Stage 4)
+
+`workflow.py` defines one shared LangGraph workflow with two event types: user turns and authenticated administrator decisions. The CLI and administrator API each use an instance of this graph, connected through the existing REST API. The RAG component remains a nested graph.
+
+```mermaid
+flowchart TD
+    User[User turn] --> Interaction[User interaction node]
+    Interaction -->|Question| RAG[RAG answer node]
+    Interaction -->|Complete form, retry or status| Agent[Administrator agent node]
+    Interaction -->|More details needed| Reply[Reply to user]
+    RAG --> Reply
+    Agent --> Inbox[REST administrator inbox]
+    Inbox -->|Authenticated human decision| Approval[Administrator approval node]
+    Approval -->|Confirmed| Recording[Data recording node: MCP]
+    Approval -->|Refused| Finish[Finalize decision node]
+    Recording -->|Saved| Finish
+    Recording -->|Error| Pending[Keep pending; administrator retries]
+    Finish --> Status[User checks status]
+    Status --> Agent
+```
+
+Each user turn or administrator decision is a short graph invocation. Waiting for a human uses the pending inbox and the `status` command, without a continuously running graph or extra checkpoint database. Authentication happens before the API invokes the approval graph. Only successful recording reaches the confirmation node. Repeated decisions and failed-write retries retain the Stage 3 protections.
+
+Personal form fields stay in the session/inbox objects, outside graph state. Graph state carries routing, request IDs, decisions, and responses. This remains a single-user CLI and single-worker API demo; process restarts clear pending session state.
+
 `Question → privacy filter → LangGraph retrieval node → Milvus public facts → answer node (LangChain prompt + Ollama) → output filter`
 
 `reserve → validated form → AdminAgent (LangChain) → REST inbox → human confirmation → MCP tool → text file → status → user`
@@ -126,6 +153,14 @@ The first evaluation measures real Milvus retrieval Recall@2, Precision@2, mean 
 The included Stage 1 report covers retrieval accuracy and latency. Automated tests cover Milvus retrieval, privacy filtering, reservation validation, graph wiring with a test LLM, and the Stage 2 handoff through the API dispatcher using an in-process HTTP transport. Stage 2 tests include both human decisions, token permissions, invalid input, and safe retry after a lost response.
 
 Stage 3 tests cover actual text-file writes, approval-only access, file permissions, invalid fields, atomic-write failure, and retry after a lost storage acknowledgement. MCP protocol discovery is also checked when running with the SDK dependency installed.
+
+Stage 4 pipeline tests exercise the real LangGraph orchestration, LangChain administrator agent, API dispatcher, and text storage together. They use a fixture retriever, a test LLM, an in-process HTTP transport, and the direct storage function for deterministic testing. They cover question answering, collection, pending status, human decisions, authorization, storage failure recovery, submission retries, and privacy. Run them with:
+
+```sh
+python -m unittest discover -s tests -p test_workflow.py -v
+```
+
+To check the deployed MCP path, run the two processes as described above with the default writer, ask a parking question, complete `reserve`, confirm its ID through the administrator endpoint, check its text file, and type `status`. A second confirmation of that ID must leave exactly one unchanged file.
 
 ## References
 

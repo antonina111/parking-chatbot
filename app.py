@@ -1,16 +1,15 @@
 """Run with: python app.py"""
-from httpx import HTTPError
-from ollama import ResponseError
-
 from rag import ParkingRAG, build_store
 from admin_agent import AdminAgent
 from reservations import ReservationWorkflow
+from workflow import ParkingWorkflow
 
 
 def main():
     rag = ParkingRAG(build_store())
     admin = AdminAgent()
     reservation = ReservationWorkflow(admin)
+    workflow = ParkingWorkflow(rag=rag, reservation=reservation)
     print("Parking chatbot (demo data). Ask a question, or type reserve, status, retry, cancel, or quit.")
     try:
         while True:
@@ -19,12 +18,7 @@ def main():
                 break
             if not text:
                 continue
-            answer = reservation.handle(text)
-            if answer is None:
-                try:
-                    answer = rag.ask(text)
-                except (ConnectionError, TimeoutError, HTTPError, ResponseError):
-                    answer = "Could not generate an answer. Please check the model service and try again."
+            answer = workflow.respond(text)
             print("Bot:", answer)
     except (EOFError, KeyboardInterrupt):
         print("\nGoodbye.")
