@@ -1,5 +1,6 @@
 """Local administrator REST inbox, using Python's built-in HTTP server."""
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from datetime import datetime, timezone
 import json
 import os
 import secrets
@@ -9,6 +10,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from reservations import FIELDS, Reservation
+from reservation_writer import write_approved
 
 
 class RequestBody(BaseModel):
@@ -34,12 +36,13 @@ class Decision(BaseModel):
 
 
 class AdminInbox:
-    def __init__(self, admin_token, bot_token):
+    def __init__(self, admin_token, bot_token, writer=write_approved):
         if not admin_token or not bot_token or admin_token == bot_token:
             raise ValueError("Set different, nonempty ADMIN_TOKEN and BOT_TOKEN environment variables.")
         self.admin_token = admin_token
         self.bot_token = bot_token
         self.requests = {}
+        self.writer = writer
 
     def dispatch(self, method, path, authorization, body=None):
         """Shared by the HTTP adapter and route tests. Run with one server worker."""
@@ -73,6 +76,17 @@ class AdminInbox:
                 decision = Decision.model_validate(body)
                 if self.requests[key]["status"] not in {"pending", decision.status}:
                     return 409, {"detail": "This request already has a final decision."}
+                request = self.requests[key]
+                if "approval_time" in request and decision.status != "confirmed":
+                    return 409, {"detail": "Confirmation is in progress. Retry confirmation to finish saving."}
+                if decision.status == "confirmed" and request["status"] != "confirmed":
+                    # Keep the timestamp stable if the response or storage acknowledgement is lost.
+                    request.setdefault("approval_time", datetime.now(timezone.utc).isoformat())
+                    try:
+                        self.writer(request)
+                    except Exception:
+                        # Do not expose filesystem paths, personal data, or internal errors.
+                        return 503, {"detail": "Could not verify storage. Retry the same confirmation."}
                 self.requests[key]["status"] = decision.status
         except ValidationError:
             return 422, {"detail": "Invalid reservation details or decision."}

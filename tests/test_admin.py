@@ -2,6 +2,7 @@ import unittest
 import json
 from io import BytesIO
 from unittest.mock import patch
+from unittest.mock import Mock
 from uuid import uuid4
 
 import httpx
@@ -18,7 +19,8 @@ BOT = {"Authorization": "Bearer test-bot"}
 
 class HandoffTests(unittest.TestCase):
     def setUp(self):
-        self.inbox = AdminInbox("test-admin", "test-bot")
+        self.writer = Mock()
+        self.inbox = AdminInbox("test-admin", "test-bot", writer=self.writer)
 
         def transport(request):
             body = json.loads(request.content) if request.content else None

@@ -6,3 +6,4 @@ langgraph==1.2.12
 langchain-ollama==1.1.0
 scikit-learn==1.9.1
 httpx>=0.28,<1
+mcp>=1.28,<2
